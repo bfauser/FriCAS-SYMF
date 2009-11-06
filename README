@@ -1,0 +1,33 @@
+===============================================================
+
+    This repository holds some files which shall implement 
+
+          Symmetric function Hopf algebras in FriCAS
+
+                                           B.Fauser, 6 Nov 2009
+                      b[dot]fauser[at]cs[dot]bham[dot]ac[dot]uk
+
+Code is joint work with Franz Lehner, TU Graz
+===============================================================
+
+prtition.spad.nw
+    contains a new domain TAB2 which adds some functionality to
+    partitions, especially it implements the Littlewood-Richardson
+    rule
+    prtition.spad.nw preplaces prtition.spad.pamphlet in FriCAS
+
+symfuncnew.spad.nw
+   Contains the definition of a basis category and the symmetric
+   function category. Furthermore the domain for power sums.
+
+symfunc.spad.nw
+    Contains an old version
+
+
+===============================================================
+
+The symmetric functions need the tensor package by Franz Lehner 
+and Waldek Hebisch recently added to FriCAS (1.0.8)
+
+===============================================================
+

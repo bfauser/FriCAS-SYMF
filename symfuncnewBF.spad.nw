@@ -1,0 +1,549 @@
+)abbrev category SYMBASC SymmetricFunctionBasisCategory
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+++    The category SYMBAS provides the basic notions of a symmetric function
+++    category. The bases are indexed by integer partitions. Main examples
+++    of bases are:
+++      - Schur function basis  (GL(n) and/or S_m irreducible characters)
+++      - power sum symmetric functions (aka Adams operations)
+++      - elemntary symmetric functions (aka lambda operations)
+++      - forgotten symmetric functions (dual of elementray ones)
+++      - complete symmetric functions (aka sigma operations)
+++      - monomial symmetric functions, the classical type of symmetric
+++        function obtained by symmetrysing a monomial, this basis is
+++        dual to the complete symmetric function basis
+++
+++    We defined the levels of algebraic operations:
+++      - The outer Hopf algebra, given by the module underlying the
+++        symmetric function ring, the associative unital outer product,
+++        the coassociative counital outer coproduct. This coproduct arises
+++        from additively splitting the underlying alpabet (variables) X
+++        into X+Y (disjoint sets of alphabest X and Y) inducing a map
+++        Sym(X) -> Sym(X) (x) Sym(X) ~= Sym(X,Y) or on elements
+++        A(X) -> A(X+Y) ~= A_(1)(X) (x) A_(2) (Sweedler index notation ()-brackets)
+++        or in a basis
+++        s_\lambda(X) -> s_\lambda(X+Y) =
+++             = \sum_{\mu,\nu} c^\lambda_{\mu,\nu} s_\mu(X) (x) s_\nu(X)
+++            ~= \sum_{\mu,\nu} c^\lambda_{\mu,\nu} s_\mu(X)s_\nu(Y)
+++        The co/multiplication table c^\lambda_{\mu,\nu} comprises
+++        the Littlewood-Richardson coefficients. Mutlitplication table
+++        = comultiplication tables (section coefficients) due to self duality.
+++        The outer product/coproduct are graded maps with respect to the
+++        weight (numer of boxes in a diagram associated to a partition)
+++        Sym_n(X) (x) Sym_m(X) ---> Sym_{n+m}(X)
+++        Sym_n(X) ---> \sum_{n1:NNI+n2:NNI=n} Sym_n1(X) (x) Sym_n2(X)
+++        The skew operation is the adjoint of outer multiplication with
+++        respect to the Schur-Hall scalar product, skews are also called
+++        Foulkes derivatives and behave like differential operators
+++        <A/B , C> :=  <A , BC>  eg <p_{kl}/p_n , p_m> = <p_kl},p_{nm}>
+++        Since the p_n are primitive elements of the outer coalgebra, these
+++        elements behave like elementary (partial) derivations
+++        A/p_n = 1/n*\partial_{p_n}(A)
+++        \partial_{p_n}(AB) = \partial_{p_n}(A)B+A\partial_{p_n}(B)
+++        The outer coproduct generalizes this (basis free) to all basis
+++        elements producing a higher Libniz rule.
+++        The map dimGL : Sym(X) -> R is an co/algebrahomomorphism of
+++        the outer co/product. This is employed in teh computation of the
+++        nonlinear part of the plethysm.
+++
+++      - The inner bialgebra (this is actually a Frobenius algebra and a
+++        Frobenius coalgebra) The inner product descibes the group ring
+++        S_n and the tesnor product decomposition of irreducibe S_n
+++        characsters. The coproduct is obtained by dualization (Sym(X) is
+++        a self dual Hopf algebra). The inner bialgebra is associative and
+++        coassociative the complete symmetric function h_n is the unit,
+++        projection on the coefficient of h_n is a counit in grade n.
+++        Since the counit maps, if collected, form an infinite series, this
+++        prevents this algebra from being counital on Sym(X). There is no
+++        antipode.
+++        In terms of alphabets, one obtaines the inner coproduct from replacing
+++        the alphabet X by the product alphabet Z=XY (for dijoint X, Y) and
+++        expanding terms in X and Y. This induces a map
+++        Sym(X) --> Sym(X) (x) Sym(X) ~= Sym(X,Y) on elements
+++        A(X) -> A(XY)~= A_[1](X) (x) A_[2] (Sweedler index notation, []-brackets)
+++        or in a basis
+++        s_\lambda(X) -> s_\lambda(XY) =
+++             = \sum_{\mu,\nu} g^\lambda_{\mu,\nu} s_\mu(X) (x) s_\nu(X)
+++            ~= \sum_{\mu,\nu} g^\lambda_{\mu,\nu} s_\mu(X)s_\nu(Y)
+++        The co/multiplication table g^\lambda_{\mu,\nu} comprises
+++        the Kronnecker coefficients, computed via the Murnaghan-Nakayama
+++        rule. g^a_{bc} is totally symmetric under permutations of abc.
+++        Mutlitplication table = comultiplication tables (section coefficients)
+++        due to self duality.
+++        The map dimSN : Sym(X) -> I is an co/algebrahomomorphism of
+++        the inner co/product.
+++
+++      - The third type of product is the compositional product of symmetric
+++        functions, or plethysm [Littlewood]. The composition product renders
+++        Schur functions (symmetric functions) to be polynomial functors
+++        on the set of alphabets. The compositional product is noncommutative
+++        and not linear in the second factor. s_1 is the left/right unit of
+++        plethysm, as usual constant terms are not allowed right hand
+++        arguments.
+++        Example: s_{(1,1)}[s_2] 
+++          s_2(x1,x2) = x1^2+x1x2+x2^2 =y1+y2+y3  
+++                  (Y a new alphabet,incl. possibel multiplicities)
+++          s_{(11)}(y1,y2,y3) = y1y2+y1y3+y2y3
+++            = x1^3x2 + x1^2x2^2 + x^x2^3    
+++          and reexpress this in terms of Schur functions s_\mu(x1,x2)
+++            = s_{(31)}
+++        The computation of plethysms is notoriously known to be hard.
+++        The present implementation provides the unique feature, that
+++        the argument of the plethysm (if R allows this) can be any
+++        R-polynomial (eg fractional, negative, or polynomial coefficients)
+++        in the used symmetric function basis.
+++        Example:
+++          s_2[-s_1] = s_{(1,1)}
+++          s_2[1/2*s_1] = 3/8*s_2 + 1/8*s_{(1,1)}
+++          s_{(1,1)}[q*s_2] =  1/2(q(q-1))*s_(4)+1/2(q(q-1)*s_(22)
+++                             +1/2(q(q+1)*s_(31) 
+++        Dualizing the plethysm gives the new coproduct of coplethysm
+++        which is not described in literature (yet).
+++
+++
+SymmetricFunctionBasisCategory(R:CommutativeRing):Category == Exports where
+ 
+    B ==> Record(name:Symbol, index:Partition)
+    SFRB ==> SymmetricFunctions(R,%)
+    MxM ==> TensorPower(2,R,%,SFRB)
+    PART ==> Partition
+
+    Exports ==> OrderedSet with
+
+        -- general constants and morphisms
+        
+        0:() -> %
+          ++ null element
+
+        1:() -> %
+          ++ unit element
+
+        coerce:Partition -> %
+
+        index:%->Partition
+          ++ creating elements
+
+        -- the outer Hopf algebra
+
+        outer:(%,%) -> SFRB
+          ++ outer multiplication (tensor product decomposition of GL
+          ++ characters)
+
+        unit:R -> %
+          ++ the unit morphism of the outer product
+
+        coouter:% -> MxM
+          ++ outer comultiplication
+        
+        counit:% -> R
+          ++ the counit morphism of the outer coproduct
+            
+        antipode:% -> SFRB
+          ++ the antipode (convolutive inverse of the identity morphisms)
+          ++ of the outer Hopf algbra
+
+        -- the inner bialgebra (Frobenius algebra)
+
+        inner:(%,%) -> SFRB
+          ++ inner multiplication (tensor product decompositio of S_n
+          ++ characters), inner is the Kronecker product
+
+        coinner:% -> MxM
+          ++ inner comultiplication        
+
+        -- higher order maps
+
+        plethysm: (%,%) -> SFRB
+          ++ plethysm is the compositonal product of symmetric functions
+          ++ we use plethysm(A,B) = A[B]. The plethysm is linear in the first
+          ++ argument A and nonlinear in the second argument B
+
+        -- further usefull and auxillay functions
+        
+        if R has IntegralDomain then
+           dimGL:(%,R) -> R
+             ++ dimension of an irreducible heighest weight GL(n) module (in the
+             ++ Schur basis) with heighest weight vector a partition. In other
+             ++ bases this is the dimenions obtained by transforming into
+             ++ the Schur basis and compute the dimension there (internally it
+             ++ may be computed directly)
+        
+        dimGL:(%,I) -> R
+
+        dimSN:% -> R
+          ++ dimension of an irreducible S_n character (of weight n, in the 
+          ++ Schur basis). Other bases implement the same map, but without
+          ++ this intepretation (see also dimGL)
+
+        scalar:(%,%) -> R
+          ++ The Schur-Hall (Refield) scalar product of symmetric functions.
+          ++ This scalar product renders the Schur basis orthonormal and the
+          ++ poer sum basis orthogonal. It defines the canonical dualization
+          ++ Sym(V) --> Sym(V)* as a graded map (choice of covector basis).
+
+)abbrev category SYMFCAT SymmetricFunctionCategory
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+SymmetricFunctionCategory(R:CommutativeRing):Category == Exports where
+
+    MxM ==> TensorPowerCategory(2,R,%)
+
+    Exports ==> with
+
+        HopfAlgebra(R,MxM)
+
+        -- exports for the outer Hopf algebra
+        -- algebra and coalgebra structure
+
+        unit:R -> %
+          ++ the unit, a map R -> %
+
+        counit:% -> R
+          ++ the counit, a map % -> R
+        
+        -- The following are linearly extended from the basis
+
+        outer:(%,%) -> %       -- default
+          ++ outer multiplication
+
+        -- coalgebra structure
+
+        coouter:% -> MxM       -- default       
+          ++ coouter is the coproduct of the outer Hopf algebra, it is
+          ++ obtained by dualizing the outer product w.r.t. the Schur-Hall
+          ++ scalar product. It is defined on teh basis and linear extended
+
+        antipode:% -> %
+          ++ the antipode of the outer Hopf algebra
+          ++ the antipode is a generalized inverse with signature % -> %
+        
+        -- exports of the inner bialgebra structure (Frobenius algebra)
+
+        inner:(%,%) -> %
+          ++ inner is the Kronecker product
+          ++
+          ++ inner is a second product on symmetric functions. It is obtained
+          ++ from the tensor product decomposition of symmetric group characters
+          ++ via the Frobenius charactersitic map ch(\Xi^\lambda)=s_\lambda
+          ++ in the Schur function basis
+          ++ The quadruple inner, unit, coinner, counit forms a Frobenius
+          ++ co/algebra structure on the ring of symmetric functions 
+
+        coinner:% -> MxM
+          ++ inner comultiplication
+          ++ coinner is the coproduct obtained by dualization of the inner
+          ++ product w.r.t. the Schur-Hall scalar product.
+          ++ coinner copies power sum symmetric functions and characterizes 
+          ++ them this way.
+          
+        -- exports for further auxiliary functions on symmetric functions
+
+        if R has IntegralDomain then
+           dimGL:(%,R) -> R
+             ++ dimension of a GL(n) heighest weight module
+             ++ with heighest weight \lambda:B
+             ++ linearly extended to the module
+             ++
+             ++ dimGL computes the dimension of heighest weight irreducible
+             ++ polynomial GL(n) modules in the Schur basis. In the power sum basis
+             ++ dimGL weights the basis with a prefactor n^\length(\lambda) for
+             ++ any basis element, and is linear extended
+        
+        dimGL:(%,I) -> R 
+
+        dimSN:% -> R
+          ++ dimension of a S_n character (of weight n)
+          ++
+          ++ dimSN computes the dimension of an irreducible S_n module with
+          ++ heighest weight \lambda in the Schur basis.
+          ++ The dimension n of the particular S_n is obtained by the weight
+          ++ of the partition (number of boxes in the Young diagram)
+          ++ the implemented dimSN is hence the union of maps dimSN_n for all n
+        
+        scalar:(%,%) -> R
+          ++ 
+          ++ linearly extended to the module
+--        LittlewoodRichardsonCoefficient:(PART,PART,PART)-> R
+--        ++ c_{mu,nu}^lambda
+--        KroneckerCoefficient:(PART,PART,PART)-> R
+--        ++ g_{mu,nu}^lambda
+
+        plethysm:(%,%) -> %
+          ++ \spad{plethysm} defines the plethysm of two power sum monomials
+          ++ this is essentially the cartesian product of the parts of the partitions
+          ++ written again as a partition
+
+
+--      add
+           -- add here generic functions
+)abbrev domain SYMF SymmetricFunctions
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+SymmetricFunctions(R:CommutativeRing, B:SymmetricFunctionBasisCategory R):Exports == Implementation  where
+
+    Term ==>  Record(k:B,c:R)
+    Term2 ==> Record(k:Vector B,c:R)
+
+    Exports ==>  with Join(FreeModuleCategory(R,B),SymmetricFunctionCategory(R))
+
+    Implementation ==> FreeModule(R,B) add
+        Rep:= FreeModule(R,B)
+        rep(x:%):Rep == x :: Rep
+        per(r:Rep):% == r :: %
+        
+        monomial(r:R,b:B):% == per ( monomial(r,b)$Rep )
+        
+        1:% == monomial(1,0$B)
+        1(r:R):% == monomial(r,0$B)
+
+        unit(r:R):% == monomial(r,0$B)
+
+        counit(x:%):R == 
+            zero? x => 0
+            res:R:=0
+            lt:List Term:=listOfTerms x
+            while not empty? lt repeat
+                res:=res + (counit((first lt).k)$B) *(first lt).c
+                lt:=rest lt
+            res
+            
+        outer(x:%,y:%) ==
+            res:% :=0
+            for xi in listOfTerms x repeat
+                for yi in listOfTerms y repeat
+                    import Term             
+                    ci:R := (xi c) * (yi c)
+--BF                res1:% := (outer(xi k,yi k)$B) pretend %
+                    res1:% := (outer(xi k,yi k)) pretend %
+                    res := res + ci*res1
+            res
+        
+        _*(x:%,y:%):% == outer(x,y)
+
+        coouterB(b:B):MxM == coouter(b)$B pretend MxM
+        
+        coouter(x:%) == linearExtend(coouterB,x)$(FreeModuleFunctions2(R,B,%,MxM))
+
+        -- does not work?
+--      coouter(x:%) == linearExtend(coouter$B,x)$(FreeModuleFunctions2(R,B,%,MxM)) --pretend MxM
+        
+        antipodeB(b:B):% == antipode(b)$B pretend %
+        
+        antipode(x:%) == linearExtend(antipodeB,x)$(FreeModuleFunctions2(R,B,%,%))      
+        inner(x:%,y:%):% == 
+            res:% :=0
+            xi,yi:Term
+            for xi in listOfTerms x repeat
+                for yi in listOfTerms y repeat
+                    ci:R := (xi c) * (yi c)
+                    res := res + ci*(inner(xi k,yi k) pretend %)
+            res
+
+        coinnerB(b:B):MxM == coouter(b)$B pretend MxM
+        
+        coinner(x:%) == linearExtend(coinnerB,x)$(FreeModuleFunctions2(R,B,%,MxM))
+
+        dimSN(x:%):R ==
+            res : R := 0
+            for term in listOfTerms x repeat
+               res:= res+(term c)*dimSN(term k)
+            res
+        
+        if R has IntegralDomain then
+           dimGL(x:%,n:R):R ==
+              res : R := 0
+              for term in listOfTerms x repeat
+                 res:= res + (term c)*dimGL(term k,n)
+              res
+        
+        dimGL(x:%,n:I):R ==
+              res : R := 0
+              for term in listOfTerms x repeat
+                 res:= res + (term c)*dimGL(term k,n)
+              res
+
+        scalar(x:%,y:%):R ==
+           xi,yj: Term
+           res : R := 0
+           for xi in listOfTerms x repeat
+              for yj in listOfTerms y repeat
+                 res:=res+(xi c)*(yj c)*scalar(xi k,yj k)
+           res 
+        
+
+        plethysmRight:(B,List Term) -> %
+          ++ the plethysm is not right linear, we have to expand the
+          ++ plethysm over sums and products using the inner and outer coproduct
+          ++ A[B+C+...+D] = A_(1)[B]*A_(2)[C+...+D]  coouter(A)=\sum A_(1) (x) A_(2)
+          ++ A[rB] = dimGL(A_[1],r)*A_[2][B]
+          ++ with coinner(A) = A_[1] (x) A_[2] and the dimGL (see above)
+
+
+------- Franz wozu ist diese function? Es gibt im allgemeinen keinen
+------- plethysmus mit der signatur plethysm(B,B)->B es gibt nur
+------- plethysm(B,B) -> %
+        plethysmB(p1:B,p2:B):% == plethysm(p1,p2)$B pretend %
+        
+        plethysmRight(p1:B,liy:List Term):% ==
+            ty1: Term
+            zero? index p1  => monomial(1,p1)
+            res: % := 0
+            if #liy = 1 then
+               return ((first liy).c)^(#index p1)*(plethysmB(p1,(first liy).k))
+            ty1:=first liy
+            resty:List Term := rest liy
+            cop1: MxM := coouter(p1)$B pretend MxM
+            import List MxM 
+            import Term2
+            mxm: Term2
+            for mxm in listOfTerms cop1 repeat
+               -- in one line it compiles really slow
+--             res1:% := (mxm.c)*dimGL(index( (mxm.k).1),(ty1.c))*plethysmB( (mxm.k).1,ty1 k)*plethysmRight((mxm.k).2,resty)
+-------
+------- needs to be replaced by dimGL otherwise only valid for power sums    
+-------
+--               exp1:NonNegativeInteger := #(index( (mxm.k).1))
+--               cc:R := (mxm.c)*(ty1.c)^exp1
+               cc:R := (mxm.c) * dimGL(index( (mxm.k).1),(ty1.c))
+               plet1:% :=plethysmB( (mxm.k).1,ty1 k)
+               plet2:% :=plethysmRight((mxm.k).2,resty)
+               res1:% := cc*plet1*plet2
+               res:=res+res1
+            res
+           
+        plethysm(x:%,y:%):% ==
+            tx,ty: Term
+            x = 0 or y = 0 => monomial(0, coerce(partition [])$B)
+            res:% := 0
+            -- plethysm is left linear but not right linear
+            -- the nonlinear bit is done in plethysmRight
+            for tx in listOfTerms x repeat
+                res:=res+(tx c)*plethysmRight(tx k,listOfTerms y)
+            res
+           
+)abbrev domain PSYMBAS PowerSumSymmetricFunctionBasis
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+PowerSumSymmetricFunctionBasis(R:CommutativeRing):Exports == Implementation where
+
+    SFRB ==> SymmetricFunctions(R,%)
+    MxM ==> TensorPower(2,R,%,SFRB)
+
+    Exports ==> SymmetricFunctionBasisCategory(R)
+        
+    Implementation ==>  Partition add
+        Rep:= Partition
+        rep(x:%):Rep == x :: Rep
+        per(r:Rep):% == r :: %
+
+        coerce(p:Partition):% == per p
+
+        index(x:%) == rep x
+
+        coerce(b:%):OutputForm == 
+--          coerce(subscript('p,[coerce(rep b)$Rep]))$Symbol
+            i:Integer
+            ind:List OutputForm:= [i::OutputForm for i in coerce(rep b)@(List Integer)]
+            coerce(subscript('p,ind))$Symbol    
+
+        counit(b:%):R == 
+            zero? (rep b) => 1
+            0
+
+        outer(p1,p2) == 
+            import Rep
+            monomial(1$R,per ((rep p1 +$Rep rep p2)))
+          ++ the outer product is the default product for symmetric functions
+          ++ it is mapped on the usual '*' for the algebra multiplication
+          -- on power sums its just unordered concatenation of partitions 
+          -- on the basis, and linear extended
+
+        coouter(p1) == 
+            p1 = 0 => tensor([0@%,0@%])$MxM
+            pi:Integer
+            l:List % := [per(partition([pi])$Rep) for pi in coerce(p1)@(List Integer)]
+            lt:List MxM :=[tensor([0@%, pip])$MxM + tensor([pip,0@%])$MxM for pip in l]
+            reduce(_*,lt)
+            
+        antipode(p1) == monomial((-1)^#(coerce(rep p1)@(List Integer)), p1)     
+          ++ The power sum basis monoms are (almost) idempotens for this operation
+          ++ the multiplicity is the zee-factor (pdct) obtained from the cycle type
+          ++ of \rho:Partition of a permutation \sigma
+          ++ inner is a Laplace pairing for the outer product in the outer Hopf algebra
+
+        inner(p1,p2) ==
+            not p1 = p2 => 0
+            monomial((pdct p1)::R,p1)
+
+        coinner(p1) == tensor([p1,p1])$MxM -- monomial(1,vector [p1,p1])
+
+        plethysm(p1,p2) ==
+           import B
+           -- need to check for empty partitions, why?
+           p1 = 0 => monomial(1,p1)
+           p2 = 0 => monomial(1,p2)
+           li : List Integer := []
+           for i in  reverse(p1::(List Integer)) repeat
+               for j in reverse(p2::(List Integer)) repeat
+                  li := concat(i*j,li)
+           monomial(1, partition li)
+
+        dimSN(p1) ==
+            wgt:Integer := weight rep p1 
+            #rep p1 = wgt => coerce(wgt)$R
+            0
+
+        -- this is actually not necessary for power sums, anyhow poer sums
+        -- should be defined over the rationals at least...
+        if R has IntegralDomain then
+           dimGL(p1:%,n:R):R == n^(#rep p1)
+        
+        dimGL(p1:%,n:I):R == n^(#rep p1)
+        
+        scalar(p1,p2):R ==
+           p1=p2 => coerce(pdct rep p1)$R
+           0

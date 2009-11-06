@@ -1,0 +1,964 @@
+% -*- mode: Noweb; noweb-code-mode: aldor-mode -*-
+
+
+\documentclass{article}
+\usepackage{axiom,amsthm,amsmath,url}
+\newtheorem{ToDo}{ToDo}[section]
+
+\newcommand{\Axiom}{{\tt Axiom}}
+
+
+\begin{document}
+\title{symfunc.spad}
+\author{Bertfried Fauser, Franz Lehner, Martin Rubey}
+\maketitle
+\tableofcontents
+
+
+\section{category SYMFCAT SymmetricFunctionCategory}
+<<category SYMFCAT SymmetricFunctionCategory>>=
+)abbrev category SYMFCAT SymmetricFunctionCategory
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+SymmetricFunctionCategory(R:IntegralDomain, B:OrderedSet):Category == Exports where
+--    zwei:NonNegativeInteger:= 2
+    MxM ==> TensorPower(2,R,B,%)
+
+    PART ==> Partition
+--    Exports ==> Join(Bialgebra(R,MxM), FreeModuleCategory (R,B)) with
+--    Exports ==> Join(Bialgebra2(R,MxM), FreeModuleCategory (R,B)) with
+--    Exports ==> FreeModuleCategory (R,B) with    
+    Exports ==> with
+        HopfAlgebra(R,MxM)
+
+        1:%
+
+        -- exports for the outer Hopf algebra
+        -- algebra structure
+        outer:(B,B) -> %        
+        outer:(%,%) -> %       -- default
+        unit:R -> %
+        ++ outer multiplication
+        -- coalgebra structure
+        coouter:B -> MxM
+        coouter:% -> MxM       -- default	
+        counit:B -> R
+        counit:% -> R
+        -- antipode	
+        ++ outer comultiplication
+	antipode:B -> %
+        antipode:% -> %
+        ++ the antipode of the outer Hopf algebra
+
+        skew:(B,B) -> %
+        skew:(%,%) -> %
+
+        -- exports of the inner bialgebra structure (Frobenius algebra)
+        inner:(B,B) -> %
+        inner:(%,%) -> %
+        ++ inner is the Kronecker product
+        coinner:B -> MxM
+        coinner:% -> MxM
+        
+	-- exports for further auxillary functions on symmetric functions
+        dimGL:(B,R) -> R
+        dimGL:(%,R) -> R
+        ++ dimension of a GL(n) heighest weight module with heighest weight \lambda:B
+        ++ linearly extended to the module
+        dimSN:B -> R
+        dimSN:% -> R
+        ++ dimension of a S_n character (of weight n)
+        scalar:(B,B) -> R
+        scalar:(%,%) -> R
+        ++ linearly extended to the module
+        plethysm:(B,B) -> %
+        plethysm:(%,%) -> %
+--        LittlewoodRichardsonCoefficient:(PART,PART,PART)-> R
+--        ++ c_{mu,nu}^lambda
+--        KroneckerCoefficient:(PART,PART,PART)-> R
+--        ++ g_{mu,nu}^lambda
+
+--      add
+           -- add here generic functions
+
+@ 
+\section{domain SYMF SymmetricFunction}
+<<domain domain SYMF SymmetricFunction>>=
+)abbrev domain SYMF SymmetricFunction
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+SymmetricFunction(R:IntegralDomain):Exports == Implementation where
+    B ==> Record(name:Symbol, index:Partition)
+    MxM ==> TensorPower(2,R,B,%)
+    Exports ==> Join(SymmetricFunctionCategory(R,B), FreeModuleCategory(R,B))     with
+        monomial:(R,Symbol, Partition)->%
+        ++ Creation of monomials
+        
+        1
+
+        -- 
+    Term ==>  Record(k:B,c:R)
+
+    Implementation ==> FreeModule(R,B) add
+        Rep := FreeModule(R,B)
+        p1,p2:B
+
+        rep(x:%):Rep == x :: Rep
+        per(r:Rep):% == r :: %
+
+        monomial(r:R,s:Symbol, p:Partition):% ==
+            monomial(r, [ [s,p]$B )
+
+--	1():% == monomial(1,'p,0$B)
+        1:% == monomial(1,'p,0$B)
+
+@
+\section{domain SYMBAS SymmetricFunctionBasis}
+<<domain SYMBAS SymmetricFunctionBasis>>=
+)abbrev domain SYMBAS SymmetricFunctionBasis
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+SymmetricFunctionBasis(a:Symbol,index:OrderedSet):Exports == Implementation where
+    Exports ==> OrderedSet with
+        coerce:index -> %
+        ++ creating elements
+        index:%->index
+	
+    Implementation ==> index add
+        Rep:= index
+        rep(x:%):Rep == x :: Rep
+        per(r:Rep):% == r :: %
+
+	coerce(i:index):% == per i
+
+	index(x:%) == rep x
+
+	coerce(b:%):OutputForm == 
+	    coerce(subscript(a,[coerce(rep b)$Rep]))$Symbol
+
+@
+<<domain TAB2 Tableau2>>=
+)abbrev domain TAB2 Tableau2
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+Tableau2:Exports == Implementation where
+    Term ==> Record(coeff:NonNegativeInteger,diag:Partition)
+
+    Exports ==> SetCategory with 
+        -- The following functions implement the functionality to multiply
+        -- Schur functions using the Littlewood Richardson Rule (LLR)
+        -- This is a recursive algorithm which adds by trial and error
+	-- boxes to the first shape respecting constraing rules.
+	
+        littlewood:(Partition,Partition)-> List Term    
+
+	ballot?:%-> Boolean
+
+	partialballot?:(Integer,List Integer)->Boolean
+	
+	makepair:(List List Integer,Partition)->%
+
+	addbox:(%,Integer,Integer)->List %
+	
+	addboxt:(List List Integer, Integer, Integer)-> List List Integer
+	
+	shape: % -> List Partition
+	
+	multpar:(Partition,Partition)-> Multiset Partition
+	
+	-- the folloing functions implement the functionality to
+        -- multiply and skew Schur functions using the Lascoux
+        -- Schuetzenberger transition method on Schubert polynomials
+        -- This allows to multiply n schur functions in a single stroke
+        -- it gives d irect way to decompose skew Schur functions which
+        -- allows to compute the coproduct much faster
+	
+	partitionToLehmer:Partition -> List Integer
+
+        permutationToLehmer:(List Integer) -> List Integer
+
+        LehmerToPermutation:(List Integer) -> List Integer
+
+        LehmerToPartition:(List Integer) -> Partition
+
+        skewPartitionToLehmer:(Partition,Partition) -> List Integer
+
+        countDescents:(List Integer) -> List Integer
+
+        transition:(List Integer) -> List List Integer
+
+    Implementation ==> add
+        Rep:= Record(lambda:Partition,tableau:List List Integer, mu:Partition)
+        rep(x:%):Rep == x :: Rep
+        per(r:Rep):% == r :: %
+	
+	makepair(t:List List Integer,p2:Partition):% == 
+	    r:List List Integer := [(empty()$(List Integer))
+		                    for i in 1..#p2-#t]
+	    r := concat(t, r)
+            p1: Partition := partition [p2.(i::PositiveInteger) + #(r.i)
+		                        for i in 1..#r]
+
+	    per ([p1,r,p2]@Rep)
+
+	shape t == [t.lambda, t.mu]
+
+	partialballot?(n:Integer,w:List Integer) ==
+	    one? n => true
+	    level:Integer:=0
+	    for j in w repeat
+	        if j = n then level:=level-1
+		if j = n-1 then level:=level+1
+		if negative? level then return false
+            true
+	    
+	ballot?(x:%) ==
+	    -- the word
+	    import List List Integer
+	    w:List Integer := reduce(concat, x.tableau)
+	    -- number of different labels
+            n:Integer:=#x.mu
+	    occ:List Vector Integer:= []
+	    -- get list of occurrences for each letter i
+	    for i in 1..n-1 repeat
+		v:List Integer:=[]
+		k:Integer:=0
+		for j in w repeat
+                    if j=i then k:=k+1
+		    v:=cons(k,v)
+		occ:=cons(vector reverse v, occ)
+	    occ:=reverse occ
+	    while not empty? occ repeat
+	        v1:Vector Integer := first occ
+		v2:Vector Integer
+	        for v2 in rest occ repeat
+		    if any?(negative?,parts (v1-v2)) then
+		        return false
+		occ:=rest occ
+            true
+	    
+        -- add one box to row i
+
+	multpar(p1,p2) == 
+	    if weight p1 < weight p2 then return multpar(p2,p1)
+	    abc1:List List Integer := [[i for j in 1..b] for i in 1..#p2 for b in p2::List Integer] -- coerce(p2)@(List Integer)
+	    abc:=reduce(concat,abc1)
+	    res:List %:= [makepair([[]],p1)]
+            eins:Integer:=1
+	    for k in 1..#p2  for b in p2::List Integer repeat
+	        for j in 1..b repeat
+		    res1:List List %:= [addbox(t,k,eins) for t in res]
+		    res:=reduce(concat,res1)
+            multiset [first shape r for r in res]
+
+	addboxt(t, k, i) ==
+	    if i > #t+1 then error "addboxt:i too large"
+	    tnew:List List Integer := copy t	    
+	    if i = #t+1 then return concat(tnew,[k])
+	    tnew i := cons(k,t i)
+            tnew   
+	
+        addbox(t,k,i) == 
+	    if i > #t.lambda +1 then return []
+	    restbox:List List Integer := t.tableau
+	    for m in 1..i repeat
+	        restbox:=rest restbox
+	    if not empty? restbox and member?(k, reduce(concat,restbox)) then
+	        return addbox(t,k,i+1)	    
+	    checkyoung:Boolean:=false
+            if i = 1 or (t.lambda).i < (t.mu).(i-1) then
+	        checkyoung := true
+	    else
+	        j:=(t.lambda).(i-1)-(t.lambda).i
+		if j>0 and ((t.tableau).(i-1)).j < k then
+		        checkyoung := true
+	    if not checkyoung then return addbox(t,k,i+1)
+
+	    tnewt:List List Integer := addboxt(t.tableau,k,i)
+	    w:List Integer:= reduce(concat,tnewt)
+            if partialballot?(k,w) then 
+	        tnew:%:= makepair(tnewt, t.mu)
+		return(cons(tnew,addbox(t,k,i+1)))
+	    else
+	        return addbox(t,k,i+1)
+	    
+        coerce(x:%):OutputForm ==
+            bracket [coerce(x.lambda)$Partition,coerce(x.tableau)$(List List Integer),coerce(x.mu)$Partition]
+@ 
+<<domain SYMP PowerSumSymmetricFunction>>=
+)abbrev domain SYMP PowerSumSymmetricFunction
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+PowerSumSymmetricFunction(R:IntegralDomain):Exports == Implementation where
+    B ==> Partition
+    MxM ==> TensorPower(2,R,B,%)
+    Exports ==> Join(SymmetricFunctionCategory(R,B), FreeModuleCategory(R,B))
+    Term ==>  Record(k:B,c:R)
+
+--    if R has Fraction then
+--       skew:(B,B) -> B
+--       skew:(%,%) -> %
+    
+    Implementation ==> FreeModule(R,B) add
+        Rep := FreeModule(R,B)
+        p1,p2:B
+
+        rep(x:%):Rep == x :: Rep
+        per(r:Rep):% == r :: %
+
+---------- BEGIN of the definitions for the outer Hopf algebra
+        ++ We start defining the procedures for the outer Hopf algebra
+        ++ HA with outer, unit, coouter, counit, antipode
+
+        ++ the unit, a map R -> %
+        -- on basis, and linear extension
+	1:% == monomial(1,0$B)
+        1(r:R):% == monomial(r,0$B)
+
+	unit(r) == monomial(r,0$B)
+
+        ++ the counit, a map % -> R
+        -- on basis, and linear extended	
+	counit(p1) == 
+	    zero? p1 => 1
+	    0
+
+        counit(x:%) == 
+            zero? x => 0
+	    lt:List Term:=listOfTerms x
+	    while not empty? lt repeat
+	        if zero? (first lt).k then return (first lt).c
+		lt:=rest lt
+            0
+	    
+        ++ the outer product is the default product for symmetric functions
+        ++ it is mapped on the usual '*' for the algebra multiplication
+        -- on power sums its just unordered concatenation of partitions 
+        -- on the basis, and linear extended
+        outer(p1,p2) == 
+            import B
+            per monomial(1,p1+p2)
+
+        outer(x:%,y:%):% == 
+            res:% :=0
+            for xi in listOfTerms x repeat
+                for yi in listOfTerms y repeat
+                    ci:R := (xi c) * (yi c)
+                    res := res + ci*outer(xi k,yi k)
+            res
+
+	_*(x:%,y:%) == outer(x,y)
+
+--------obsolet code?
+--	coouter1:B -> MxM
+--	
+--        coouter1(p1) == 
+--	    res:MxM:=0
+--	    import B
+--	    pi:Integer
+--	    for pi in coerce(p1)@(List Integer) repeat
+--	        pip:B := partition [pi]
+--	        res := res*(tensor([0@B,pip])$MxM + tensor([pip,0@B]))
+--            res
+
+        ++ coouter is the coproduct of the outer Hopf algebra, it is
+        ++ obtained by dualizing the outer product w.r.t. the Schur-Hall
+        ++ scalar product. It is defined on teh basis and linear extended
+        coouter(p1) == 
+	    import B
+            p1 = 0 => tensor([0@B,0@B])$MxM
+	    pi:Integer
+	    l:List B := [partition([pi])$B for pi in coerce(p1)@(List Integer)]
+	    lt:List MxM :=[tensor([0@B, pip])$MxM + tensor([pip,0@B])$MxM for pip in l]
+	    reduce(_*,lt)
+
+	coouter(x:%) == linearExtend(coouter,x)$(FreeModuleFunctions2(R,B,%,MxM))	
+
+        ++ the antipode is a generalized inverse with signature % -> %
+        -- for power sum symmetric functions it is just (-1)^length(partion)
+        -- where the partitions index the basis, then its linear extended
+        antipode(p1) == monomial((-1)^#(coerce(p1)@(List Integer)), p1)
+
+	antipode(x:%) == linearExtend(antipode,x)$(FreeModuleFunctions2(R,B,%,%))
+
+        skew(p1,p2):% ==
+            import B
+--            not R has Fraction => error "Power sums need rationals...."
+            (retract := subtractIfCan(p1,p2)) case "failed" => 0
+            par:B := retract::B
+--            1/pdct(par)*(per monomial(1,par)::%)
+            per monomial(1,par)::%
+
+        skew(x:%,y:%):% ==
+            res:% :=0
+            for xi in listOfTerms x repeat
+                for yi in listOfTerms y repeat
+                    ci:R := (xi c) * (yi c)
+                    res := res + skew(xi k,yi k)
+            res
+
+---------- END of the definitions for the outer Hopf algebra
+
+---------- BEGIN of the definitions for the inner bialgbra
+	-- NOTE: pdct (from Partitions) returns zee-factor
+        ++ inner is a second product on symmetric functions. It is obtained
+        ++ from the tensor product decomposition of symmetric group characters
+        ++ via the Frobenius charactersitic map ch(\Xi^\lambda)=s_\lambda
+        ++ in the Schur function basis
+        ++ The quadruple inner, unit, coinner, counit forms a Frobenius
+        ++ co/algebra structure on the ring of symmetric functions 
+        ++ The power sum basis monoms are (almost) idempotens for this operation
+        ++ the multiplicity is the zee-factor (pdct) obtained from the cycle type
+        ++ of \rho:Partition of a permutation \sigma
+        ++ inner is a Laplace pairing for the outer product in the outer Hopf algebra
+        -- inner is defined on the basis and then linear extended  
+	inner(p1,p2) ==
+	    not p1 = p2 => 0
+	    per monomial((pdct p1)::R,p1)::%
+
+        inner(x:%,y:%):% == 
+            res:% :=0
+	    xi,yi:Term
+            for xi in listOfTerms x repeat
+                for yi in listOfTerms y repeat
+                    ci:R := (xi c) * (yi c)
+                    res := res + ci*inner(xi k,yi k)
+            res
+
+        ++ coinner is the coproduct onbatine by dualization of the inner
+        ++ product w.r.t. the Schur-Hall scalar product.
+        ++ coinner copies power sum symmetric functions and characterizes 
+        ++ them this way.
+        -- inner is defined on the basis and linear extened
+        coinner(p1) == tensor([p1,p1])$MxM -- monomial(1,vector [p1,p1])
+
+	coinner(x:%) == linearExtend(coinner,x)$(FreeModuleFunctions2(R,B,%,MxM))
+
+---------- END of the definitions for the inner bialgbra
+---------- BEGIN of plethysm
+
+        ++ \spad{plethysm} defines the plethysm of two power sum monomials
+        ++ this is essentially the cartesian product of the parts of the partitions
+        ++ written again as a partition
+        plethysm(p1,p2) ==
+           import B
+--         -- need to check for empty partitions, why?
+           p1 = 0 => monomial(1,p1)
+           p2 = 0 => monomial(1,p2)
+           li : List Integer := []
+           for i in  reverse(p1::(List Integer)) repeat
+               for j in reverse(p2::(List Integer)) repeat
+                  li := concat(i*j,li)
+           monomial(1, partition li)
+   
+        plethysmRight:(B,List Term) -> %
+        ++ the plethysm is not right linear, we have to expand the
+        ++ plethysm over sums and products using the inner and outer coproduct
+        ++ A[B+C+...+D] = A_(1)[B]*A_(2)[C+...+D]  with coouter(A)=\sum A_(1) (x) A_(2)
+        ++ A[rB] = dimGL(A_[1],r)*A_[2][B] = r^#(A_[1])*A_[2][B]
+        ++ with coinner(A) = A_[1] (x) A_[2] and the dimGL (see above) diretcly implemented
+
+        plethysmRight(p1,liy) ==
+           ty: Term
+           p1 = 0 => monomial(1,partition [])
+           res: % := 0
+           if #liy = 1 then
+              return ((liy 1) c)^(#p1)*plethysm(p1,(liy 1) k)
+           ty1:=first liy
+           resty := rest liy
+           cop1: MxM := coouter(p1)
+           for mxm in listOfTerms cop1 repeat
+              res:=res+(mxm.c)*(ty1.c)^(#((mxm.k).1))*plethysm((mxm.k).1,ty1 k)*plethysmRight((mxm.k).2,resty)
+           res
+
+        plethysm(x:%,y:%):% ==
+           tx,ty: Term
+           x = 0 or y = 0 => monomial(0,partition [])
+           res:% := 0
+           -- plethysm is left linear but not right linear
+           -- the nonlinear bit is done in plethysmRight
+           for tx in listOfTerms x repeat
+               res:=res+(tx c)*plethysmRight(tx k,listOfTerms y)
+           res
+
+---------- END of plethysm
+---------- BEGIN of further auxillay functions
+
+        ++ dimGL computes the dimension of heighest weight irreducible
+        ++ polynomial GL(n) modules in the Schur basis. In the power sum basis
+        ++ dimGL weights the basis with a prefactor n^\length(\lambda) for
+        ++ any basis element, and is linear extended
+        dimGL(p1,n:R):R == n^(#p1)
+	
+        dimGL(x:%,n:R):R ==
+            res : R := 0
+            for term in listOfTerms x repeat
+               res:= res + (term c)*dimGL(term k,n)
+            res
+
+---------- obsolete code?
+--  dimGL: code does not compile, would be more effective?
+--         the list is produced and can be printed with
+--            print([((term c)*dimGL(term k,n)) for term in listOfTerms x]::OutputForm)$OutputForm
+--            reduce(_+, [((term c)*dimGL(term k,n)) for term in listOfTerms x])
+--         the reduce(_+, ...) odes not compile?
+
+        ++ dimSN computes the dimension of an irreducible S_n module with
+        ++ heighest weight \lambda in the Schur basis.
+        ++ The dimension n of the particular S_n is obtained by the weight
+        ++ of the partition (number of boxes in the Young diagram)
+        ++ the implemented dimSN is hence the union of maps dimSN_n for all n
+        -- it is then linear extened
+        dimSN(p1) ==
+            wgt:Integer := weight p1 
+            #p1 = wgt => coerce(wgt)$R
+            0
+
+        dimSN(x:%):R ==
+            res : R := 0
+            for term in listOfTerms x repeat
+               res:= res+(term c)*dimSN(term k)
+            res
+
+        scalar(p1,p2):R ==
+           p1=p2 => coerce(pdct p1)$R
+           0
+
+        scalar(x:%,y:%):R ==
+           xi,yj: Term
+           res : R := 0
+           for xi in listOfTerms x repeat
+              for yj in listOfTerms y repeat
+                 res:=res+(xi c)*(yj c)*scalar(xi k,yj k)
+           res 
+
+---------- END of further auxillay functions
+
+@  
+
+<<domain SYMS SchurSymmetricFunction>>=
+)abbrev domain SYMS SchurSymmetricFunction
+++ Author: Bertfried Fauser b.fauser@cs.bham.ac.uk,
+++         Franz Lehner lehner@finanz.math.tugraz.at
+++         Martin Rubey
+++ Date Created: October 2009
+++ Date Last Updated: 21 October 2009
+++ Fix History: 
+++ Basic Functions:
+++ Related Constructors:
+++ Also See:
+++ AMS Classifications:
+++ Keywords:
+++ References:
+++ Description:
+SchurSymmetricFunction(R:IntegralDomain):Exports == Implementation where
+    B ==> Partition
+    MxM ==> TensorPower(2,R,B,%)
+    OUT ==> OutputForm
+    Exports ==> Join(SymmetricFunctionCategory(R,B), FreeModuleCategory(R,B))
+    Term ==>  Record(k:B,c:R)
+    L  ==> List
+    I  ==> Integer
+    NNI ==> NonNegativeInteger
+    PARTPERM ==> PartitionsAndPermutations
+
+    Implementation ==> FreeModule(R,B) add
+
+        Rep := FreeModule(R,B)
+        p1,p2:B
+
+        rep(x:%):Rep == x :: Rep
+        per(r:Rep):% == r :: %
+
+---------- BEGIN of the definitions for the outer Hopf algebra
+        ++ We start defining the procedures for the outer Hopf algebra
+        ++ HA with outer, unit, coouter, counit, antipode
+
+        ++ the unit, a map R -> %
+        -- on basis, and linear extension
+	1:% == monomial(1,0$B)
+        1(r:R):% == monomial(r,0$B)
+
+	unit(r) == monomial(r,0$B)
+
+        ++ the counit, a map % -> R
+        -- on basis, and linear extended	
+	counit(p1) == 
+	    zero? p1 => 1
+	    0
+
+        counit(x:%) == 
+            zero? x => 0
+	    lt:List Term:=listOfTerms x
+	    while not empty? lt repeat
+	        if zero? (first lt).k then return (first lt).c
+		lt:=rest lt
+            0
+	    
+        ++ the outer product is the default product for symmetric functions
+        ++ it is mapped on the usual '*' for the algebra multiplication
+        -- on power sums its just unordered concatenation of partitions 
+        -- on the basis, and linear extended
+        outer(p1,p2) == 
+            import B
+            p1 = 0 => per monomial(1,p2)::%
+            p2 = 0 => per monomial(1,p1)::%
+            mp: Multiset Partition := multpar(p1,p2)$Tableau2
+            lp: List Partition := members mp
+            res:% := 0
+            for p in lp repeat
+               res := res + (per monomial(count(p,mp)::R,p)::%)
+            res
+
+        outer(x:%,y:%):% == 
+            res:% :=0
+            for xi in listOfTerms x repeat
+                for yi in listOfTerms y repeat
+                    ci:R := (xi c) * (yi c)
+                    res := res + ci*outer(xi k,yi k)
+            res
+
+	_*(x:%,y:%) == outer(x,y)   -- default
+
+        coouter(p1) == 
+            import PARTPERM
+            mu,nu: L I
+            limu,linu: L L I
+            i : I
+            p1 = 0 => tensor([0@B,0@B])$MxM
+            np:= weight(p1)
+            res: MxM := 0
+            for i in 0..np repeat
+               -- lists need to be constructed outside the for loop
+               limu := entries complete partitions(i)
+               linu := entries complete partitions(np-i)
+               for mu in limu repeat
+                  for nu in linu repeat
+                     res:= res + scalar(monomial(1,p1)::%,outer(partition mu,partition nu))*tensor([partition nu,partition mu])$MxM
+            res
+
+	coouter(x:%) == linearExtend(coouter,x)$(FreeModuleFunctions2(R,B,%,MxM))
+
+        antipode(p1) == 
+            p1 = 0 => monomial(1,p1)$%
+            cf := abs(weight p1)::NNI       -- stupid thing has to be NNI
+            monomial((-1)^cf,conjugate p1)
+
+	antipode(x:%) == linearExtend(antipode,x)$(FreeModuleFunctions2(R,B,%,%))
+
+        skew(p1,p2) ==
+            import B
+            import PARTPERM
+            weight(p1) < weight(p1) => 0
+            if weight(p1) = weight(p2) then
+               p1 = p2 => monomial(1,0@B)::%
+            np:I := weight(p1)+weight(p2)
+            parLi: L L I := entries complete partitions(np)
+            res:% := 0
+            for par in parLi repeat
+               mon:% := monomial(1,partition par)::% 
+               res := res + scalar(mon,outer(p1,p2))*mon
+	    res
+
+        skew(x:%,y:%):% == 
+            res:% :=0
+            for xi in listOfTerms x repeat
+                for yi in listOfTerms y repeat
+                    ci:R := (xi c) * (yi c)
+                    res := res + ci*skew(xi k,yi k)
+            res
+
+---------- END of the definitions for the outer Hopf algebra
+
+---------- BEGIN of the definitions for the inner bialgebra
+
+	inner(p1,p2) ==
+            import B
+            import PARTPERM
+            cf: I
+	    wt: I := weight(p1)
+            wt = 0 => 0
+	    not wt = weight(p2) => 0
+            parLi: L L I
+            res: % := 0
+            parLi := entries complete partitions(wt)
+            for p3 in parLi repeat
+               cf: I := 0
+               cfFI: Fraction Integer := 0
+               for rho in parLi repeat
+                   prho: B := partition rho
+                   cfFI := cfFI+MurnaghanNakayama(p1,prho)*MurnaghanNakayama(p2,prho)*MurnaghanNakayama(partition p3,prho)/pdct(prho)
+               -- cfFI/pdct is know to be an integer, no "failed" case needed in the following coercion
+               cf := cf + numer(cfFI)@Integer                  
+               res := res+monomial(cf::R,partition p3)::%
+            per monomial(1,p1)::%
+            res
+
+        inner(x:%,y:%):% == 
+            res:% :=0
+	    xi,yi:Term
+            for xi in listOfTerms x repeat
+                for yi in listOfTerms y repeat
+                    ci:R := (xi c) * (yi c)
+                    res := res + ci*inner(xi k,yi k)
+            res
+
+        coinner(p1) == 
+            import PARTPERM
+            mu,nu: L I
+            limu,linu: L L I
+            i : I
+            p1 = 0 => tensor([0@B,0@B])$MxM
+            np:= weight(p1)
+            res: MxM := 0
+            -- lists need to be constructed outside the for loop
+            li := entries complete partitions(np)
+            for mu in li repeat
+               for nu in li repeat
+                  res:= res + scalar(monomial(1,p1)::%,inner(partition mu,partition nu))*tensor([partition nu,partition mu])$MxM
+            res
+
+	coinner(x:%) == linearExtend(coouter,x)$(FreeModuleFunctions2(R,B,%,MxM))
+
+
+---------- END of the definitions for the inner bialgbra
+---------- BEGIN of plethysm
+
+
+
+---------- END of plethysm
+---------- BEGIN of further auxillay functions
+
+        dimSN(p1) ==
+            p1 = 0 => 1  -- or 1 ??
+            wgtFact: Fraction Integer := (factorial (weight p1))::(Fraction Integer) 
+            hooks: Fraction Integer := hookProd(p1)::(Fraction Integer)
+            res: I := (numer(wgtFact::(Fraction Integer)/hooks))@Integer  
+            res::R
+
+        dimSN(x:%):R ==
+            res : R := 0
+            for term in listOfTerms x repeat
+               res:= res+(term c)*dimSN(term k)
+            res
+
+        contentProd:(B, R) -> R
+
+        contentProd(p:B,n:R):R ==
+           import B
+           cont: R := 1
+           for j in 1..#p for pi in p::(List Integer) repeat
+              for i in 1..pi repeat
+                 cont:=cont*(n+((i-j)::R))
+           cont
+
+-------- work in progress needs a rethinking here how to divide content/hooks
+        dimGL(p1:B,n:R):R == 
+           import B
+           hooks: % := hookProd(p1)::%
+           content: R := contentProd(p1,n)::R
+--           res:R 
+--           res := content/hooks    --- should be content/hooks
+--           res = "failed" => error "This should not happen"
+--           res::%
+
+
+        dimGL(x:%,n:R):R ==
+            res : R := 0
+            for term in listOfTerms x repeat
+               res:= res + (term c)*dimGL(term k,n)
+            res
+--------
+
+
+        scalar(p1,p2):R ==
+           p1=p2 => 1$R
+           0
+
+        scalar(x:%,y:%):R ==
+           xi,yj: Term
+           res : R := 0
+           for xi in listOfTerms x repeat
+              for yj in listOfTerms y repeat
+                 res:=res+(xi c)*(yj c)*scalar(xi k,yj k)
+           res 
+
+---------- END of further auxillay functions
+
+@
+
+
+<<test>>=
+pairTab:=makepair([[1,2,3],[2,3]], partition [2,1,1])
+addbox(pairTab,1,1)
+@
+<<test>>=
+P:=PowerSumSymmetricFunction(Fraction Polynomial(Integer))
+
+p0B:Partition:=0$Partition
+p1B:Partition:=partition [2,1]
+p2B:Partition:=partition [3,1]
+p3B:Partition:=partition [3,3,1]
+p4B:Partition:=partition [2,2]
+outer(p1B,p2B)$P
+inner(p2B,p4B)$P
+inner(p3B,p3B)$P
+p0:=monomial(1,p0B)$P
+p1:=monomial(1,p1B)$P
+p2:=monomial(1,p2B)$P
+p3:=monomial(1,p3B)$P
+p4:=monomial(1,p4B)$P
+outer(p2,p3)
+outer(p1+q*p2,p2+t*p3)
+coouter p3
+coouter(2*p0)
+unit(1)$P  -- works only with $P correctly, why?
+unit(4)$P
+unit(t^2+4)$P 
+counit p3
+counit p0
+counit(p0+t*p2)
+counit(t*p0+p2)
+antipode p2
+antipode p3
+antipode(t*p2+q*p3)
+coinner p3
+coinner(2*p0)
+coinner(t*p1+3*p2)
+plethysm(p1B,p3B)$P
+plethysm(p2,p2)
+plethysm(2*p1,p2)
+plethysm(2*p1+p2,p2)
+plethysm(p2,q*p3)
+plethysm(p1,p1+2*p2+3*p3)
+plethysm(t*p1,t*p2+1/t*p3)
+dimGL(p2,3)
+dimGL(p3,q)
+dimGL(p2+p3,q)
+dimSN(p1)
+dimSN(p2)
+dimSN(p3+p4)
+scalar(p1,p2)
+scalar(p1,p1+p2)
+scalar(p2+p3,p3+p4)
+---- SCHUR FUNCTIONS ----
+par0 := partition []
+par1 := partition [3,1,2]
+par2 := partition [3,3]
+par3 := conjugate par2
+par4 := partition [6]
+S:=SchurSymmetricFunction(Fraction Polynomial(Integer))
+p0:=monomial(1,par0)$S
+p1:=monomial(1,par1)$S
+p2:=monomial(1,par2)$S
+p3:=monomial(1,par3)$S
+p4:=monomial(1,par4)$S
+--
+inner(p0,p1)
+inner(p1,p1)
+inner(p4,p2)
+inner(p2,p2)
+--
+liPars := entries complete partitions(3)
+
+LLI2: List List S := []
+--
+for pi1 in liPars repeat
+   list2: List S := []
+   for pi2 in liPars repeat
+     mon1:=monomial(1,partition pi1)$S
+     mon2:=monomial(1,partition pi2)$S
+     list2:=concat(list2,inner(mon1,mon2))
+   LLI2 := concat(LLI2,list2)
+matrix(LLI2)
+--
+liPars := entries complete partitions43)
+
+LLI2: List List S := []
+--
+for pi1 in liPars repeat
+   list2: List S := []
+   for pi2 in liPars repeat
+     mon1:=monomial(1,partition pi1)$S
+     mon2:=monomial(1,partition pi2)$S
+     list2:=concat(list2,inner(mon1,mon2))
+   LLI2 := concat(LLI2,list2)
+matrix(LLI2)
+--
+liPars := entries complete partitions(5)
+
+LLI2: List List S := []
+--
+for pi1 in liPars repeat
+   list2: List S := []
+   for pi2 in liPars repeat
+     mon1:=monomial(1,partition pi1)$S
+     mon2:=monomial(1,partition pi2)$S
+     list2:=concat(list2,inner(mon1,mon2))
+   LLI2 := concat(LLI2,list2)
+matrix(LLI2)
+@ 
+<<*>>=
+<<category SYMFCAT SymmetricFunctionCategory>>
+<<domain SYMBAS SymmetricFunctionBasis>>
+<<domain TAB2 Tableau2>>
+<<domain SYMP PowerSumSymmetricFunction>>
+<<domain SYMS SchurSymmetricFunction>>
+@ 
+<<todo>>=
+@ 
