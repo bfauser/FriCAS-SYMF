@@ -247,6 +247,8 @@ SymmetricFunctionBasisCategory(R:CommutativeRing): Category == Exports where
           ++ outer multiplication
           ++ (tensor product decomposition of GL characters)
 
+        skew:(%,%) -> SFRB
+
         unit:R -> %
           ++ the unit morphism of the outer product
 
@@ -345,6 +347,9 @@ SymmetricFunctionCategory(R:CommutativeRing,B:SymmetricFunctionBasisCategory(R))
       ++ outer multiplication
       ++ the outer product is the default product for symmetric functions
       ++ it is mapped on the usual '*' for the algebra multiplication.
+
+    skew:(%,%) -> %
+      ++ skew or Foulkes derivative
 
     -- coalgebra structure
 
@@ -494,6 +499,7 @@ SymmetricFunctions(R:CommutativeRing, B:SymmetricFunctionBasisCategory R):Export
             (outer$B)(b1,b2) pretend %
                     
         outer(x:%,y:%):% ==
+            xi,yj: Term
             res:% :=0
             for xi in listOfTerms x repeat
                 for yi in listOfTerms y repeat
@@ -516,6 +522,17 @@ SymmetricFunctions(R:CommutativeRing, B:SymmetricFunctionBasisCategory R):Export
         antipodeB(b:B):% == antipode(b)$B pretend %
         
         antipode(x:%):% == linearExtend(antipodeB,x)$(FreeModuleFunctions2(R,B,%,%))      
+
+        skew(x:%,y:%):% ==
+           xi,yj: Term
+           res:% :=0
+           for xi in listOfTerms x repeat
+              for yj in listOfTerms y repeat
+                 import Term
+                 ci:R := (xi c)*(yj c)
+                 res1:% := (skew(xi k,yj k)$B) pretend %
+                 res:=res + ci*res1
+           res 
 
         inner(x:%,y:%):% == 
             res:% :=0
@@ -630,8 +647,11 @@ SymmetricFunctions(R:CommutativeRing, B:SymmetricFunctionBasisCategory R):Export
 --PowerSumSymmetricFunctionBasis(R:CommutativeRing):Exports == Implementation where
 PowerSumSymmetricFunctionBasis(R:CommutativeRing,name:Symbol): Exports == Implementation where
 
-    M ==> SymmetricFunctions(R,%)
-    MxM ==> TensorPower(2,R,%,M)
+    M         ==> SymmetricFunctions(R,%)
+    MxM       ==> TensorPower(2,R,%,M)
+    I         ==> Integer
+    L         ==> List
+    PARTPERM  ==> PartitionsAndPermutations
 
     Exports ==> SymmetricFunctionBasisCategory(R)
         
@@ -664,7 +684,31 @@ PowerSumSymmetricFunctionBasis(R:CommutativeRing,name:Symbol): Exports == Implem
             monomial(1$R,p:%:= per (rep p1 +$Rep rep p2))$M
         -- On power sums its just unordered concatenation of partitions 
         -- on the basis.
-            
+
+-- skew is flawed needs to divide but cannot be done so easily!
+        if R has IntegralDomain then
+           skew(p1:%,p2:%) ==
+              import B
+              import PARTPERM
+              weight(rep p1) < weight(rep p1) => 0$M
+              if weight(rep p1) = weight(rep p2) then
+                 p1 = p2 => monomial(1,partition [])$M
+              np:I := weight(rep p1)-weight(rep p2)
+              parLi: L L I := entries complete partitions(np)
+              res:M := 0
+              for par in parLi repeat
+                 mon:M := monomial(1,partition par)$M 
+                 cf:R := scalar(p1::M,outer(mon,p2::M))
+                 cd:R := pdct(partition par)::R
+--                 res2:R := exquo(cf,cd)
+--                 if res2 = "failed" => error "Cannot divide, power sums need rational field!" 
+--                 cc:R := res::R
+                 res := res + mon  --cc*mon
+	      res
+          else
+            skew(p1:%,p2:%) ==
+               error "skew needs at least an IntegralDomain, better Rationals!" 
+
         coouter(p1:%):MxM == 
             p1 = 0 => tensor([0@%,0@%])$MxM
             pi:Integer
@@ -735,8 +779,12 @@ PowerSumSymmetricFunctionBasis(R:CommutativeRing,name:Symbol): Exports == Implem
 --SchurSymmetricFunctionBasis(R:CommutativeRing):Exports == Implementation where
 SchurSymmetricFunctionBasis(R:CommutativeRing,name:Symbol): Exports == Implementation where
 
-    M ==> SymmetricFunctions(R,%)
-    MxM ==> TensorPower(2,R,%,M)
+    M        ==> SymmetricFunctions(R,%)
+    MxM      ==> TensorPower(2,R,%,M)
+    I        ==> Integer
+    L        ==> List
+    PARTPERM ==> PartitionsAndPermutations
+    NNI      ==> NonNegativeInteger
 
     Exports ==> SymmetricFunctionBasisCategory(R)
         
@@ -775,11 +823,55 @@ SchurSymmetricFunctionBasis(R:CommutativeRing,name:Symbol): Exports == Implement
                res := res + monomial(count(rep p,mp)::R,rep p)$M
             res
 
+	_*(x:%,y:%):M == outer(x,y)  -- default
 
---        outer(p1:%,p2:%):M == 
---            monomial(1$R,p:%:= per (rep p1 +$Rep rep p2))$M
---        -- On power sums its just unordered concatenation of partitions 
---        -- on the basis.
+        -- coouter needs to be replaced by Lascoux-Schuetzenberger skew !
+        coouter(p1) == 
+            import B
+            import PARTPERM
+            mu,nu: L I
+            limu,linu: L L I
+            i : I := 1::I
+            p1 = 0 => tensor([0@M,0@M])$MxM
+            np:= weight(rep p1)
+            res: MxM := 0$MxM
+            for i in 0..np repeat
+               -- lists need to be constructed outside the for loop
+               limu := entries complete partitions(i)
+               linu := entries complete partitions(np-i)
+               for mu in limu repeat
+                  for nu in linu repeat
+                     res:= res + scalar(monomial(1,rep p1)$M,outer(partition mu,partition nu))*tensor([partition nu,partition mu])$MxM
+            res
+
+        antipode(p1) == 
+            p1 = 0 => monomial(1,p1)$M
+            cf := abs(weight rep p1)::NNI       -- stupid thing has to be NNI
+            monomial((-1)^cf,conjugate p1)$M
+
+
+        skew(p1:%,p2:%) ==
+            import B
+            import PARTPERM
+            weight(rep p1) < weight(rep p1) => 0$M
+            if weight(rep p1) = weight(rep p2) then
+               p1 = p2 => monomial(1,partition [])$M
+            np:I := weight(rep p1)-weight(rep p2)
+            parLi: L L I := entries complete partitions(np)
+            res:M := 0
+            for par in parLi repeat
+               mon:M := monomial(1,partition par)$M 
+               res := res + scalar(p1::M,outer(mon,p2::M))*mon
+	    res
+
+
+--------
+
+
+        scalar(p1:%,p2:%):R ==
+            p1=p2 => 1$R
+            0$R
+
 
 
 @
